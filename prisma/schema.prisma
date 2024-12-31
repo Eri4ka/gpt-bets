@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id        Int           @id
+  completed Boolean       @default(false)
+  date      DateTime
+  url       String
+  title     String
+  details   EventDetails?
+}
+
+model EventDetails {
+  id        Int      @id @default(autoincrement())
+  eventId   Int      @unique
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  shortName String
+  date      DateTime
+  cards     Card[]
+}
+
+model Card {
+  id           Int           @id @default(autoincrement())
+  name         String        
+  displayName  String
+  eventDetailsId      Int
+  eventDetails        EventDetails  @relation(fields: [eventDetailsId], references: [id], onDelete: Cascade)
+  competitions Competition[]
+
+  @@unique([name, eventDetailsId])
+}
+
+model Competition {
+  id          Int          @id
+  matchNumber Int
+  fightWeight String?
+  cardId      Int
+  card        Card         @relation(fields: [cardId], references: [id])
+  competitors Competitor[]
+}
+
+model Competitor {
+  id            Int         @id @default(autoincrement())
+  athleteId     Int
+  athlete       Athlete     @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  record        String?
+  competitionId Int
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  bets          Bet[]
+
+  @@unique([athleteId, competitionId])
+}
+
+model Athlete {
+  id         Int          @id
+  fullName   String
+  age        Int?
+  country    String?
+  competitor Competitor[]
+}
+
+model Bet {
+  id           Int        @id @default(autoincrement())
+  name         String
+  odd          String
+  competitorId Int
+  competitor   Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+}
